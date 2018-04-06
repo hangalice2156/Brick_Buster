@@ -16,6 +16,8 @@ namespace Brick_Buster
         Label[] bricks = new Label[48];
         Board Player1 = new Board();
         Ball Ball_1 = new Ball();
+        public int score;
+        public int H_score;
 
         public Form1()
         {
@@ -27,6 +29,7 @@ namespace Brick_Buster
         //Brick generator function and Game generator
         public void generateBricks()
         {
+            Array.Clear(bricks, 0, 48);
             int index = 0;
             for(int i = 0; i < 8; ++i)
             {
@@ -38,8 +41,6 @@ namespace Brick_Buster
                 }
             }
         }
-
-        
         public void gameStart()
         {
             this.Controls.Add(Player1);
@@ -64,7 +65,11 @@ namespace Brick_Buster
         {
             if(Ball_1.Bottom > Player1.Top && Ball_1.Left < Player1.Right && Ball_1.Right > Player1.Left)
             {
-                Ball_1.setVelocity(-Ball_1.getVelocityX(), Ball_1.getVelocityY());
+                int Delta;
+                if (((Ball_1.Left + Ball_1.Right) / 2 - (Player1.Left + Player1.Right) / 2) < 0) Delta = -1;
+                else Delta = 1;
+
+                Ball_1.setVelocity(-Ball_1.getVelocityX() ,Ball_1.getVelocityY() * Delta);
             }
         }
         public void checkCollideBrick()
@@ -75,18 +80,75 @@ namespace Brick_Buster
                 if (Ball_1.Top < bricks[i].Bottom && Ball_1.Left < bricks[i].Right && Ball_1.Right > bricks[i].Left)
                 {
                     Ball_1.setVelocity(-Ball_1.getVelocityX(), Ball_1.getVelocityY());
+                    bricks[i].Location = new Point(-100, -100);
                     this.Controls.Remove(bricks[i]);
                     bricks[i].Dispose();
+                    score += 20;
+                    break;
+                }
+                //top collision
+                if(Ball_1.Bottom < bricks[i].Top && Ball_1.Left < bricks[i].Right && Ball_1.Right > bricks[i].Left)
+                {
+                    Ball_1.setVelocity(-Ball_1.getVelocityX(), Ball_1.getVelocityY());
+                    bricks[i].Location = new Point(-100, -100);
+                    this.Controls.Remove(bricks[i]);
+                    bricks[i].Dispose();
+                    score += 20;
+                    break;
+                }
+                //right
+                if (Ball_1.Left < bricks[i].Right && Ball_1.Top > bricks[i].Bottom && Ball_1.Bottom < bricks[i].Top)
+                {
+                    Ball_1.setVelocity(Ball_1.getVelocityX(), -Ball_1.getVelocityY());
+                    bricks[i].Location = new Point(-100, -100);
+                    this.Controls.Remove(bricks[i]);
+                    bricks[i].Dispose();
+                    score += 20;
+                    break;
+                }
+                //left
+                if (Ball_1.Right > bricks[i].Left && Ball_1.Top > bricks[i].Bottom && Ball_1.Bottom < bricks[i].Top)
+                {
+                    Ball_1.setVelocity(Ball_1.getVelocityX(), -Ball_1.getVelocityY());
+                    bricks[i].Location = new Point(-100, -100);
+                    this.Controls.Remove(bricks[i]);
+                    bricks[i].Dispose();
+                    score += 20;
                     break;
                 }
             }
+        }
+
+        //success or failure
+        public void checkWinorLose()
+        {
+            if(Ball_1.Bottom > Player1.Bottom)
+            {
+                timer1.Enabled = false;
+                MessageBox.Show("You Lost! try again", "GG");
+            }
+            if(score > 950)
+            {
+                timer1.Enabled = false;
+                MessageBox.Show("You win! Congratulations", "GG");
+            }
+        }
+        public void scoreUpdate()
+        {
+            ScoreLabel.Text = "Score: " + score;
+            if(score > H_score)
+            {
+                H_score = score;
+                HighScoreLabel.Text = "High Score: " + H_score;
+            }
+
         }
 
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
             int X = e.X;
             if(X < 50) { X = 50; }
-            if(X > 560) { X = 560; }
+            if(X > 685) { X = 685; }
 
             Player1.Location = new Point(X - 50, 375);
         }
@@ -98,6 +160,112 @@ namespace Brick_Buster
             checkBounceBorder();
             checkBounceBoard();
             checkCollideBrick();
+            checkWinorLose();
+            scoreUpdate();
+        }
+
+        //diffculity settings
+        private void DiffE_CheckedChanged(object sender, EventArgs e)
+        {
+            Player1.Size = new Size(100, 25);
+        }
+
+        private void DiffN_CheckedChanged(object sender, EventArgs e)
+        {
+            Player1.Size = new Size(75, 25);
+        }
+
+        private void DiffH_CheckedChanged(object sender, EventArgs e)
+        {
+            Player1.Size = new Size(50, 25);
+        }
+
+        private void DiffHow_CheckedChanged(object sender, EventArgs e)
+        {
+            Player1.Size = new Size(600, 25);
+        }
+
+        private void DiffEX_CheckedChanged(object sender, EventArgs e)
+        {
+            Player1.Size = new Size(10, 5);
+        }
+
+        //speed setting
+        private void radioButton3_CheckedChanged(object sender, EventArgs e)
+        {
+            Ball_1.setVelocity(4, -4);
+        }
+        private void SpeedH_CheckedChanged(object sender, EventArgs e)
+        {
+            Ball_1.setVelocity(8, -8);
+        }
+        private void SpeedEX_CheckedChanged(object sender, EventArgs e)
+        {
+            Ball_1.setVelocity(20, -20);
+        }
+
+        //button functions
+        private void StartBtn_Click(object sender, EventArgs e)
+        {
+            gameContinue();
+        }
+        public void gameContinue()
+        {
+            timer1.Enabled = true;
+        }
+        private void ResetBtn_Click(object sender, EventArgs e)
+        {
+            gameReset();
+        }
+        public void gameReset()
+        {
+            timer1.Enabled = false;
+            for (int i = 0; i < Brick_numbers; ++i)
+            {
+                bricks[i].Location = new Point(-100, -100);
+                this.Controls.Remove(bricks[i]);
+                bricks[i].Dispose();
+            }
+            generateBricks();
+            Ball_1.Location = new Point(300, 200);
+            score = 0;
+        }
+        private void PauseBtn_Click(object sender, EventArgs e)
+        {
+            gamePause();
+        }
+        public void gamePause()
+        {
+            timer1.Enabled = false;
+        }
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+        }
+
+        private void Form1_KeyUp(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.P:
+                    {
+                        gamePause();
+                        break;
+                    }
+                case Keys.R:
+                    {
+                        gameReset();
+                        break;
+                    }
+                case Keys.G:
+                    {
+                        gameContinue();
+                        break;
+                    }
+                default:
+                    {
+                        break;
+                    }
+            }
         }
     }
 
@@ -126,11 +294,11 @@ namespace Brick_Buster
     {
         public Ball()
         {
-            Size = new Size(30, 30);
+            Size = new Size(20, 20);
             Location = new Point(300, 200);
             BackColor = Color.Azure;
-            Velocity_X = -10;
-            Velocity_Y = -10;
+            Velocity_X = 4;
+            Velocity_Y = -4;
         }
         public void setVelocity(int X, int Y)
         {
